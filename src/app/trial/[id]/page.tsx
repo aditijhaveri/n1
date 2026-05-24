@@ -2062,6 +2062,25 @@ export default function TrialPage() {
           </div>
         )}
 
+        {/* View results */}
+        <div style={{ textAlign: 'center' as const }}>
+          <button
+            onClick={() => router.push(`/trial/${trialId}/results`)}
+            style={{
+              background: 'transparent',
+              border: `1px solid ${colors.accent}40`,
+              borderRadius: '10px',
+              padding: '10px 20px',
+              fontSize: '13px',
+              color: colors.accent,
+              cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+          >
+            View results →
+          </button>
+        </div>
+
         {/* Agent feed */}
         <AgentFeed trialId={trialId} accentColor={colors.accent} />
 
