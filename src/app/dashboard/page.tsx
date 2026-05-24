@@ -1,3 +1,5 @@
+// 
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -26,21 +28,19 @@ const DOMAIN_COLORS: Record<string, string> = {
   other:     '#2dd4bf',
 }
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  intake:    { bg: '#f59e0b15', text: '#fbbf24', border: '#f59e0b30' },
-  active:    { bg: '#22c55e15', text: '#4ade80', border: '#22c55e30' },
-  paused:    { bg: '#6366f115', text: '#818cf8', border: '#6366f130' },
-  concluded: { bg: '#ffffff10', text: '#ffffff50', border: '#ffffff20' },
-  abandoned: { bg: '#ef444415', text: '#f87171', border: '#ef444430' },
+const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  intake:    { bg: '#f59e0b12', text: '#fcd34d', border: '#f59e0b25' },
+  active:    { bg: '#22c55e12', text: '#86efac', border: '#22c55e25' },
+  paused:    { bg: '#6366f112', text: '#a5b4fc', border: '#6366f125' },
+  concluded: { bg: '#ffffff08', text: '#ffffff50', border: '#ffffff15' },
+  abandoned: { bg: '#ef444412', text: '#fca5a5', border: '#ef444425' },
 }
 
 function getProgress(trial: Trial): number {
   if (!trial.started_at || !trial.protocol?.versions) return 0
   const started = new Date(trial.started_at)
   const daysSinceStart = Math.floor((Date.now() - started.getTime()) / 86400000)
-  const activeVersion = trial.protocol.versions?.find(
-    (v: any) => v.version === trial.protocol.active_version
-  )
+  const activeVersion = trial.protocol.versions?.find((v: any) => v.version === trial.protocol.active_version)
   if (!activeVersion?.phases) return 0
   const totalDays = activeVersion.phases.reduce((sum: number, p: any) => sum + p.duration_days, 0)
   return Math.min((daysSinceStart / totalDays) * 100, 100)
@@ -50,9 +50,7 @@ function getCurrentPhase(trial: Trial): string | null {
   if (!trial.started_at || !trial.protocol?.versions) return null
   const started = new Date(trial.started_at)
   const daysSinceStart = Math.floor((Date.now() - started.getTime()) / 86400000)
-  const activeVersion = trial.protocol.versions?.find(
-    (v: any) => v.version === trial.protocol.active_version
-  )
+  const activeVersion = trial.protocol.versions?.find((v: any) => v.version === trial.protocol.active_version)
   if (!activeVersion?.phases) return null
   let dayCount = 0
   for (const phase of activeVersion.phases) {
@@ -60,12 +58,6 @@ function getCurrentPhase(trial: Trial): string | null {
     dayCount += phase.duration_days
   }
   return null
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
-  })
 }
 
 export default function DashboardPage() {
@@ -80,12 +72,8 @@ export default function DashboardPage() {
     const supabase = getSupabaseBrowserClient()
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
-
     const { data } = await supabase
-      .from('trials')
-      .select('*')
-      .order('created_at', { ascending: false })
-
+      .from('trials').select('*').order('created_at', { ascending: false })
     setTrials((data as Trial[]) || [])
     setLoading(false)
   }
@@ -101,101 +89,79 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={styles.loadingScreen}>
-        <p style={styles.loadingText}>Loading...</p>
+      <div style={s.loadingScreen}>
+        <p style={s.loadingText}>Loading...</p>
       </div>
     )
   }
 
   return (
-    <div style={styles.root}>
-
-      {/* Ambient orbs */}
-      <div style={styles.orbTopRight} />
-      <div style={styles.orbBottomLeft} />
+    <div style={s.root}>
+      <div style={s.orbTR} />
+      <div style={s.orbBL} />
 
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerInner}>
+      <header style={s.header}>
+        <div style={s.headerInner}>
           <div>
-            <h1 style={styles.logo}>N=1</h1>
-            <p style={styles.logoSub}>Personal Clinical Trials</p>
+            <h1 style={s.logo}>N=1</h1>
+            <p style={s.logoSub}>Personal Clinical Trials</p>
           </div>
-          <div style={styles.headerRight}>
-            <span style={styles.userEmail}>{user?.email}</span>
-            <button onClick={handleSignOut} style={styles.signOutBtn}>
-              Sign out
-            </button>
+          <div style={s.headerRight}>
+            <span style={s.userEmail}>{user?.email}</span>
+            <button onClick={handleSignOut} style={s.signOutBtn}>Sign out</button>
           </div>
         </div>
       </header>
 
-      <main style={styles.main}>
+      <main style={s.main}>
 
         {/* Top bar */}
-        <div style={styles.topBar}>
+        <div style={s.topBar}>
           <div>
-            <h2 style={styles.pageTitle}>My experiments</h2>
-            <p style={styles.pageSubtitle}>
-              {trials.length === 0
-                ? 'No experiments yet'
-                : `${trials.length} experiment${trials.length === 1 ? '' : 's'}`}
+            <h2 style={s.pageTitle}>My experiments</h2>
+            <p style={s.pageSubtitle}>
+              {trials.length === 0 ? 'No experiments yet' : `${trials.length} experiment${trials.length === 1 ? '' : 's'}`}
             </p>
           </div>
-          <button
-            onClick={() => router.push('/intake')}
-            style={styles.newBtn}
-          >
+          <button onClick={() => router.push('/intake')} style={s.newBtn}>
             + New experiment
           </button>
         </div>
 
         {/* Empty state */}
         {trials.length === 0 && (
-          <div style={styles.emptyState}>
-            <div style={styles.emptyIcon}>⬡</div>
-            <h3 style={styles.emptyTitle}>No experiments yet</h3>
-            <p style={styles.emptySubtitle}>
-              Start by describing a health hypothesis. The agent will design a rigorous protocol to test it.
+          <div style={s.emptyState}>
+            <p style={s.emptyIcon}>◈</p>
+            <h3 style={s.emptyTitle}>No experiments yet</h3>
+            <p style={s.emptySubtitle}>
+              Start by describing a health hunch. We'll help you turn it into something you can actually test.
             </p>
-            <button
-              onClick={() => router.push('/intake')}
-              style={styles.emptyBtn}
-            >
+            <button onClick={() => router.push('/intake')} style={s.emptyBtn}>
               Start your first experiment
             </button>
           </div>
         )}
 
-        {/* Active trials */}
+        {/* Active */}
         {activeTrials.length > 0 && (
-          <section style={styles.section}>
-            <p style={styles.sectionLabel}>Active</p>
-            <div style={styles.trialList}>
+          <section style={s.section}>
+            <p style={s.sectionLabel}>Active</p>
+            <div style={s.trialList}>
               {activeTrials.map(trial => (
-                <TrialCard
-                  key={trial.id}
-                  trial={trial}
-                  onClick={() => router.push(`/trial/${trial.id}`)}
-                />
+                <TrialCard key={trial.id} trial={trial} onClick={() => router.push(`/trial/${trial.id}`)} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Other trials */}
+        {/* Other */}
         {otherTrials.length > 0 && (
-          <section style={styles.section}>
-            <p style={styles.sectionLabel}>
-              {activeTrials.length > 0 ? 'Other' : 'All experiments'}
-            </p>
-            <div style={styles.trialList}>
+          <section style={s.section}>
+            <p style={s.sectionLabel}>{activeTrials.length > 0 ? 'Other' : 'All experiments'}</p>
+            <div style={s.trialList}>
               {otherTrials.map(trial => (
-                <TrialCard
-                  key={trial.id}
-                  trial={trial}
-                  onClick={() => router.push(`/trial/${trial.id}`)}
-                />
+                <TrialCard key={trial.id} trial={trial} onClick={() => router.push(`/trial/${trial.id}`)} />
               ))}
             </div>
           </section>
@@ -208,8 +174,8 @@ export default function DashboardPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         button { cursor: pointer; font-family: 'DM Sans', sans-serif; }
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
@@ -219,62 +185,68 @@ export default function DashboardPage() {
 function TrialCard({ trial, onClick }: { trial: Trial; onClick: () => void }) {
   const progress = getProgress(trial)
   const currentPhase = getCurrentPhase(trial)
-  const accentColor = DOMAIN_COLORS[trial.domain || 'other'] || DOMAIN_COLORS.other
-  const statusStyle = STATUS_COLORS[trial.status] || STATUS_COLORS.intake
-  const activeVersion = trial.protocol?.versions?.find(
-    (v: any) => v.version === trial.protocol?.active_version
-  )
+  const accent = DOMAIN_COLORS[trial.domain || 'other'] || DOMAIN_COLORS.other
+  const statusStyle = STATUS_STYLES[trial.status] || STATUS_STYLES.intake
+  const activeVersion = trial.protocol?.versions?.find((v: any) => v.version === trial.protocol?.active_version)
 
   return (
-    <div onClick={onClick} style={styles.card}>
-      <div style={{ ...styles.cardAccent, background: accentColor }} />
+    <div onClick={onClick} style={s.card}>
+      {/* Top accent line */}
+      <div style={{ ...s.cardAccent, background: accent }} />
 
-      <div style={styles.cardTop}>
-        <div style={styles.cardMeta}>
+      {/* Top row */}
+      <div style={s.cardTopRow}>
+        <div style={s.pills}>
           {trial.domain && (
-            <span style={{ ...styles.domainPill, color: accentColor, background: `${accentColor}18`, border: `1px solid ${accentColor}30` }}>
+            <span style={{ ...s.domainPill, color: accent, background: `${accent}15`, border: `1px solid ${accent}28` }}>
               {trial.domain}
             </span>
           )}
-          <span style={{ ...styles.statusPill, background: statusStyle.bg, color: statusStyle.text, border: `1px solid ${statusStyle.border}` }}>
+          <span style={{ ...s.statusPill, ...statusStyle }}>
             {trial.status}
           </span>
         </div>
         {currentPhase && (
-          <span style={styles.phaseChip}>{currentPhase}</span>
+          <span style={s.phaseChip}>{currentPhase}</span>
         )}
       </div>
 
-      <h3 style={styles.cardTitle}>
+      {/* Hypothesis */}
+      <p style={s.cardHypothesis}>
         {trial.hypothesis_refined || trial.hypothesis_raw}
-      </h3>
+      </p>
 
+      {/* Intervention */}
       {activeVersion?.intervention_definition && (
-        <p style={styles.cardSub}>
+        <p style={s.cardIntervention}>
           {activeVersion.intervention_definition}
         </p>
       )}
 
+      {/* Progress bar */}
       {trial.status === 'active' && (
-        <div style={styles.progressSection}>
-          <div style={styles.progressTrack}>
-            <div style={{ ...styles.progressFill, width: `${progress}%`, background: accentColor }} />
+        <div style={s.progressRow}>
+          <div style={s.progressTrack}>
+            <div style={{ ...s.progressFill, width: `${progress}%`, background: accent }} />
           </div>
-          <span style={styles.progressPct}>{Math.round(progress)}%</span>
+          <span style={s.progressPct}>{Math.round(progress)}%</span>
         </div>
       )}
 
-      <div style={styles.cardFooter}>
-        <span style={styles.cardDate}>
-          Started {trial.started_at ? new Date(trial.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'not yet'}
+      {/* Footer */}
+      <div style={s.cardFooter}>
+        <span style={s.cardDate}>
+          {trial.started_at
+            ? `Started ${new Date(trial.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+            : 'Not started'}
         </span>
-        <span style={{ ...styles.cardArrow, color: accentColor }}>→</span>
+        <span style={{ ...s.cardArrow, color: accent }}>→</span>
       </div>
     </div>
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
+const s: Record<string, React.CSSProperties> = {
   root: {
     minHeight: '100vh',
     background: '#080b12',
@@ -283,27 +255,21 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'relative',
     overflowX: 'hidden',
   },
-  orbTopRight: {
+  orbTR: {
     position: 'fixed',
-    width: '500px',
-    height: '500px',
-    top: '-150px',
-    right: '-150px',
+    width: '500px', height: '500px',
+    top: '-150px', right: '-150px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, #1d4ed830, transparent 70%)',
-    pointerEvents: 'none',
-    zIndex: 0,
+    background: 'radial-gradient(circle, #1d4ed820, transparent 70%)',
+    pointerEvents: 'none', zIndex: 0,
   },
-  orbBottomLeft: {
+  orbBL: {
     position: 'fixed',
-    width: '400px',
-    height: '400px',
-    bottom: '-100px',
-    left: '-100px',
+    width: '400px', height: '400px',
+    bottom: '-100px', left: '-100px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, #7c3aed20, transparent 70%)',
-    pointerEvents: 'none',
-    zIndex: 0,
+    background: 'radial-gradient(circle, #7c3aed15, transparent 70%)',
+    pointerEvents: 'none', zIndex: 0,
   },
   loadingScreen: {
     minHeight: '100vh',
@@ -313,18 +279,17 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
   },
   loadingText: {
-    color: '#ffffff30',
+    color: '#ffffff25',
     fontSize: '14px',
     fontFamily: "'DM Sans', sans-serif",
   },
   header: {
-    position: 'relative',
-    zIndex: 10,
-    borderBottom: '1px solid #ffffff08',
-    background: 'rgba(8,11,18,0.85)',
+    position: 'relative', zIndex: 10,
+    borderBottom: '1px solid #ffffff0a',
+    background: 'rgba(8,11,18,0.92)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
-    padding: '20px 24px',
+    padding: '18px 24px',
   },
   headerInner: {
     maxWidth: '760px',
@@ -334,18 +299,18 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
   },
   logo: {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: 500,
-    letterSpacing: '-0.02em',
-    color: '#ffffffee',
+    color: '#ffffff',
     fontFamily: "'DM Mono', monospace",
+    letterSpacing: '-0.01em',
   },
   logoSub: {
     fontSize: '11px',
-    color: '#ffffff30',
-    letterSpacing: '0.05em',
-    marginTop: '2px',
+    color: '#ffffff28',
+    letterSpacing: '0.06em',
     textTransform: 'uppercase',
+    marginTop: '2px',
   },
   headerRight: {
     display: 'flex',
@@ -353,21 +318,20 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '16px',
   },
   userEmail: {
-    fontSize: '13px',
-    color: '#ffffff40',
+    fontSize: '12px',
+    color: '#ffffff35',
   },
   signOutBtn: {
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '8px',
-    padding: '6px 14px',
-    fontSize: '13px',
-    color: '#ffffff60',
+    padding: '5px 14px',
+    fontSize: '12px',
+    color: '#ffffff50',
     cursor: 'pointer',
   },
   main: {
-    position: 'relative',
-    zIndex: 10,
+    position: 'relative', zIndex: 10,
     maxWidth: '760px',
     margin: '0 auto',
     padding: '32px 24px',
@@ -376,166 +340,159 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: '32px',
+    marginBottom: '28px',
   },
   pageTitle: {
-    fontSize: '24px',
+    fontSize: '22px',
     fontWeight: 400,
     color: '#ffffffee',
     letterSpacing: '-0.02em',
   },
   pageSubtitle: {
     fontSize: '13px',
-    color: '#ffffff40',
-    marginTop: '4px',
+    color: '#ffffff35',
+    marginTop: '3px',
   },
   newBtn: {
     background: '#ffffff',
     border: 'none',
-    borderRadius: '12px',
-    padding: '10px 20px',
-    fontSize: '14px',
+    borderRadius: '10px',
+    padding: '9px 18px',
+    fontSize: '13px',
     fontWeight: 500,
     color: '#080b12',
     cursor: 'pointer',
-    transition: 'opacity 0.2s',
     flexShrink: 0,
   },
   emptyState: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '80px 24px',
+    padding: '72px 24px',
     textAlign: 'center',
-    background: 'rgba(255,255,255,0.02)',
+    background: 'rgba(255,255,255,0.025)',
     border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: '24px',
+    borderRadius: '20px',
   },
   emptyIcon: {
-    fontSize: '40px',
-    marginBottom: '20px',
-    opacity: 0.3,
+    fontSize: '32px',
+    marginBottom: '16px',
+    opacity: 0.2,
   },
   emptyTitle: {
-    fontSize: '18px',
+    fontSize: '17px',
     fontWeight: 400,
-    color: '#ffffff80',
-    marginBottom: '10px',
+    color: '#ffffff70',
+    marginBottom: '8px',
   },
   emptySubtitle: {
-    fontSize: '14px',
-    color: '#ffffff40',
+    fontSize: '13px',
+    color: '#ffffff35',
     lineHeight: 1.6,
-    maxWidth: '340px',
-    marginBottom: '28px',
+    maxWidth: '320px',
+    marginBottom: '24px',
   },
   emptyBtn: {
     background: '#ffffff',
     border: 'none',
-    borderRadius: '12px',
-    padding: '12px 24px',
-    fontSize: '14px',
+    borderRadius: '10px',
+    padding: '10px 22px',
+    fontSize: '13px',
     fontWeight: 500,
     color: '#080b12',
     cursor: 'pointer',
   },
-  section: {
-    marginBottom: '32px',
-  },
+  section: { marginBottom: '28px' },
   sectionLabel: {
-    fontSize: '11px',
-    color: '#ffffff30',
+    fontSize: '10px',
+    color: '#ffffff28',
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    marginBottom: '12px',
+    letterSpacing: '0.1em',
+    marginBottom: '10px',
   },
   trialList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
+    gap: '10px',
   },
   card: {
     position: 'relative',
-    background: 'rgba(255,255,255,0.04)',
-    backdropFilter: 'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '20px',
-    padding: '22px 24px',
+    background: 'rgba(255,255,255,0.05)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderRadius: '16px',
+    padding: '18px 20px',
     cursor: 'pointer',
     overflow: 'hidden',
-    transition: 'background 0.2s, border-color 0.2s, transform 0.15s',
+    transition: 'background 0.2s, border-color 0.2s',
     animation: 'fadeUp 0.3s ease forwards',
   },
   cardAccent: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 0, left: 0, right: 0,
     height: '2px',
-    opacity: 0.5,
+    opacity: 0.7,
   },
-  cardTop: {
+  cardTopRow: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: '12px',
+    marginBottom: '10px',
   },
-  cardMeta: {
+  pills: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
   },
   domainPill: {
     fontSize: '11px',
     fontWeight: 500,
-    padding: '3px 10px',
+    padding: '2px 9px',
     borderRadius: '20px',
     textTransform: 'capitalize',
-    letterSpacing: '0.02em',
   },
   statusPill: {
     fontSize: '11px',
-    fontWeight: 500,
-    padding: '3px 10px',
+    fontWeight: 400,
+    padding: '2px 9px',
     borderRadius: '20px',
     textTransform: 'capitalize',
   },
   phaseChip: {
     fontSize: '11px',
-    color: '#ffffff40',
-    textTransform: 'capitalize',
+    color: '#ffffff35',
     fontFamily: "'DM Mono', monospace",
+    textTransform: 'capitalize',
   },
-  cardTitle: {
-    fontSize: '15px',
+  cardHypothesis: {
+    fontSize: '14px',
     fontWeight: 400,
     color: '#ffffffcc',
-    lineHeight: 1.4,
+    lineHeight: 1.45,
     letterSpacing: '-0.01em',
-    marginBottom: '6px',
+    marginBottom: '5px',
   },
-  cardSub: {
-    fontSize: '13px',
-    color: '#ffffff40',
+  cardIntervention: {
+    fontSize: '12px',
+    color: '#ffffff45',
     lineHeight: 1.5,
-    marginBottom: '14px',
+    marginBottom: '12px',
     display: '-webkit-box',
     WebkitLineClamp: 2,
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
   },
-  progressSection: {
+  progressRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    marginBottom: '14px',
+    marginBottom: '12px',
   },
   progressTrack: {
     flex: 1,
-    height: '3px',
-    background: '#ffffff10',
+    height: '2px',
+    background: '#ffffff0f',
     borderRadius: '2px',
     overflow: 'hidden',
   },
@@ -545,10 +502,10 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'width 0.6s ease',
   },
   progressPct: {
-    fontSize: '11px',
-    color: '#ffffff30',
+    fontSize: '10px',
+    color: '#ffffff28',
     fontFamily: "'DM Mono', monospace",
-    width: '30px',
+    width: '28px',
     textAlign: 'right',
   },
   cardFooter: {
@@ -557,11 +514,11 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
   },
   cardDate: {
-    fontSize: '12px',
-    color: '#ffffff30',
+    fontSize: '11px',
+    color: '#ffffff28',
   },
   cardArrow: {
-    fontSize: '16px',
-    opacity: 0.6,
+    fontSize: '14px',
+    opacity: 0.5,
   },
 }
