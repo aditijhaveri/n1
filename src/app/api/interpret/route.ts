@@ -184,14 +184,6 @@ export async function POST(request: NextRequest) {
       visible: true,
     })
 
-    // Mark trial as concluded if not already
-    if (trial.status !== 'concluded') {
-      await serviceClient.from('trials').update({
-        status: 'concluded',
-        concluded_at: new Date().toISOString(),
-      }).eq('id', trialId)
-    }
-
     return NextResponse.json({ interpretation, cached: false })
 
   } catch (error: any) {
